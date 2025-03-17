@@ -47,20 +47,20 @@ object JavaMavenBuildPipeline : BuildType({
 
         // Step 5: Run SonarQube Analysis (Optional)
         step {
-            name = "SonarQube Scan"
-            type = "sonarqube"
-            param("sonar.projectKey", "JavaMavenProject")
-            param("sonar.host.url", "http://your-sonar-url")
-        }
-
+    name = "SonarQube Scan"
+    type = "sonarqube"
+    param("sonar.projectKey", "JavaMavenProject")
+    param("sonar.host.url", "https://sonarcloud.io")
+    param("sonar.organization", "skanarul8002")
+}
         // Step 6: Docker Build & Push
         step {
             name = "Docker Build & Push"
             type = "simpleRunner"
             param("use.custom.script", "true")
             scriptContent = """
-              docker build -t your-dockerhub-username/javamavenproject:latest .
-              docker push your-dockerhub-username/javamavenproject:latest
+              docker build -t skanarul8002/javamavenproject:latest .
+              docker push skanarul8002/javamavenproject:latest
             """.trimIndent()
         }
 
