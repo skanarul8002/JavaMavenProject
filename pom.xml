@@ -20,6 +20,12 @@
     <!-- Dependencies -->
     <dependencies>
         <!-- JUnit for Testing -->
+      <dependency>
+          <groupId>org.jetbrains.teamcity</groupId>
+          <artifactId>kotlin-dsl</artifactId>
+          <version>2023.11</version> <!-- Match your TeamCity version -->
+       </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
