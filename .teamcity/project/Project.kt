@@ -1,8 +1,9 @@
-package JavaMavenProject
+package javamavenproject
 
 import jetbrains.buildServer.configs.kotlin.v2019_2.*
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.*
 import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.*
+import jetbrains.buildServer.configs.kotlin.v2019_2.projectFeatures.SonarQubeProjectFeature
 import jetbrains.buildServer.configs.kotlin.v2019_2.Project
 
 version = "2023.11"
@@ -47,12 +48,12 @@ object JavaMavenBuildPipeline : BuildType({
 
         // Step 5: Run SonarQube Analysis (Optional)
         step {
-    name = "SonarQube Scan"
-    type = "sonarqube"
-    param("sonar.projectKey", "JavaMavenProject")
-    param("sonar.host.url", "https://sonarcloud.io")
-    param("sonar.organization", "skanarul8002")
-}
+            name = "SonarQube Scan"
+            type = "SonarQubeRunner"
+            param("sonarProjectKey", "JavaMavenProject")
+            param("sonarHostUrl", "https://sonarcloud.io")
+            param("sonar.organization", "skanarul8002")
+        }
         // Step 6: Docker Build & Push
         step {
             name = "Docker Build & Push"
