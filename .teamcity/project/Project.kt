@@ -1,66 +1,83 @@
-package SimpleApp
+package JavaMavenProject
 
-import jetbrains.buildServer.configs.kotlin.v2024_1.*
-import jetbrains.buildServer.configs.kotlin.v2024_1.buildSteps.maven
-import jetbrains.buildServer.configs.kotlin.v2024_1.projectFeatures.BuildReportTab
-import jetbrains.buildServer.configs.kotlin.v2024_1.projectFeatures.buildReportTab
-import jetbrains.buildServer.configs.kotlin.v2024_1.vcs.GitVcsRoot
+import jetbrains.buildServer.configs.kotlin.v2019_2.*
+import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.*
+import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.*
+import jetbrains.buildServer.configs.kotlin.v2019_2.Project
 
-version = "2024.1"
+version = "2023.11"
 
 project {
-    vcsRoot(SimpleAppVcs)
-
-    buildType(BuildAndTest)
-    buildType(Deploy)
-
-    features {
-        buildReportTab {
-            title = "Build Log"
-            startPage = "log.html"
-        }
-    }
+    description = "CI/CD Pipeline for JavaMavenProject"
+    
+    buildType(JavaMavenBuildPipeline)
 }
 
-object SimpleAppVcs : GitVcsRoot({
-    name = "SimpleApp VCS"
-    url = "https://github.com/your/repo.git"
-    branch = "refs/heads/main"
-    checkoutPolicy = GitVcsRoot.AgentCheckoutPolicy.USE_AGENT_MIRROR
-})
+object JavaMavenBuildPipeline : BuildType({
+    name = "Java Maven CI/CD Pipeline"
 
-object BuildAndTest : BuildType({
-    name = "1. Build and Test"
-
+    // Pull code from GitHub
     vcs {
-        root(SimpleAppVcs)
+        root(DslContext.settingsRoot)
     }
 
     steps {
+        // Step 1: Git Checkout (automatically handled by TeamCity)
+        
+        // Step 2: Compile Code
         maven {
-            goals = "clean package"
+            name = "Compile Code"
+            goals = "clean compile"
             pomLocation = "pom.xml"
+        }
+
+        // Step 3: Run Unit Tests
+        maven {
+            name = "Run Tests"
+            goals = "test"
+            pomLocation = "pom.xml"
+        }
+
+        // Step 4: Package Application
+        maven {
+            name = "Package JAR"
+            goals = "package"
+            pomLocation = "pom.xml"
+        }
+
+        // Step 5: Run SonarQube Analysis (Optional)
+        step {
+            name = "SonarQube Scan"
+            type = "sonarqube"
+            param("sonar.projectKey", "JavaMavenProject")
+            param("sonar.host.url", "http://your-sonar-url")
+        }
+
+        // Step 6: Docker Build & Push
+        step {
+            name = "Docker Build & Push"
+            type = "simpleRunner"
+            param("use.custom.script", "true")
+            scriptContent = """
+              docker build -t your-dockerhub-username/javamavenproject:latest .
+              docker push your-dockerhub-username/javamavenproject:latest
+            """.trimIndent()
+        }
+
+        // Step 7: Deploy to Kubernetes
+        step {
+            name = "Kubernetes Deployment"
+            type = "simpleRunner"
+            scriptContent = """
+              kubectl apply -f k8s/deployment.yaml
+            """.trimIndent()
         }
     }
 
+    // Auto-build on each push
     triggers {
         vcs {
-            branchFilter = "+:refs/heads/main"
+            branchFilter = "+:*"  // Monitor all branches
         }
-    }
-})
-
-object Deploy : BuildType({
-    name = "2. Deploy"
-
-    steps {
-        maven {
-            goals = "deploy"
-            pomLocation = "pom.xml"
-        }
-    }
-
-    dependencies {
-        snapshot(BuildAndTest) {}
     }
 })
