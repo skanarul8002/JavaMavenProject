@@ -1,22 +1,66 @@
-package Project
+package SimpleApp
 
-import jetbrains.buildServer.configs.kotlin.v2023_11.*
-import jetbrains.buildServer.configs.kotlin.v2023_11.Project
+import jetbrains.buildServer.configs.kotlin.v2024_1.*
+import jetbrains.buildServer.configs.kotlin.v2024_1.buildSteps.maven
+import jetbrains.buildServer.configs.kotlin.v2024_1.projectFeatures.BuildReportTab
+import jetbrains.buildServer.configs.kotlin.v2024_1.projectFeatures.buildReportTab
+import jetbrains.buildServer.configs.kotlin.v2024_1.vcs.GitVcsRoot
 
-object Project : Project({
-    id("MyProject")
-    name = "My Project"
+version = "2024.1"
 
-    buildType(Build)
+project {
+    vcsRoot(SimpleAppVcs)
+
+    buildType(BuildAndTest)
+    buildType(Deploy)
+
+    features {
+        buildReportTab {
+            title = "Build Log"
+            startPage = "log.html"
+        }
+    }
+}
+
+object SimpleAppVcs : GitVcsRoot({
+    name = "SimpleApp VCS"
+    url = "https://github.com/your/repo.git"
+    branch = "refs/heads/main"
+    checkoutPolicy = GitVcsRoot.AgentCheckoutPolicy.USE_AGENT_MIRROR
 })
 
-object Build : BuildType({
-    name = "Simple Build"
+object BuildAndTest : BuildType({
+    name = "1. Build and Test"
+
+    vcs {
+        root(SimpleAppVcs)
+    }
 
     steps {
         maven {
-            goals = "clean install"
+            goals = "clean package"
             pomLocation = "pom.xml"
         }
+    }
+
+    triggers {
+        vcs {
+            branchFilter = "+:refs/heads/main"
+        }
+    }
+})
+
+object Deploy : BuildType({
+    name = "2. Deploy"
+
+    steps {
+        maven {
+            goals = "deploy"
+            pomLocation = "pom.xml"
+        }
+    }
+
+    dependencies {
+        snapshot(BuildAndTest) {}
     }
 })
